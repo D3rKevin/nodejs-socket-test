@@ -20,8 +20,11 @@ const addClientToList = (client) => {
     clientList.appendChild(newClient);
 }
 
-const removeClientFromList = (client) => {
+const handleClientDisconnect = (client) => {
     document.getElementById(client).remove();
+    const disconnectMessage = document.createElement("p");
+    disconnectMessage.innerHTML = client + " has disconnected";
+    document.getElementById("chat").appendChild(disconnectMessage);
 }
 
 const addMessageToChat = (data) => {
@@ -45,7 +48,7 @@ const resolveData = (data) => {
     }
 
     if(data.startsWith(CLIENT_DISCONNECT)){
-        removeClientFromList(data.slice(CLIENT_DISCONNECT.length));
+        handleClientDisconnect(data.slice(CLIENT_DISCONNECT.length));
         return;
     }
 
