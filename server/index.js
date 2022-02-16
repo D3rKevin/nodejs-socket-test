@@ -9,6 +9,12 @@ const RECIEVE_MESSAGE = "$RECIEVE_MESSAGE$"
 
 const clients = new Map();
 
+const broadcast = (message, data) => {
+    clients.forEach((value) => {
+        value.sendUTF(message + data);
+    });
+}
+
 const broadcast_new_client = (newClientID) => {
   clients.forEach((value) => {
       value.sendUTF(NEW_CLIENT_CONNECT + newClientID);
@@ -65,15 +71,14 @@ wsServer.on('request', function(request) {
         connection.sendUTF(NEW_CLIENT_CONNECT + key);
     }) 
     clients.set(clientID, connection);
-    broadcast_new_client(clientID);
+    broadcast(NEW_CLIENT_CONNECT, clientID);
     connection.sendUTF(CLIENT_ACCEPTED + clientID);
+
     connection.on('message', function(message) {
         if (message.type === 'utf8') {
             console.log('Received Message: ' + message.utf8Data);
             if(message.utf8Data.startsWith(SEND_MESSAGE)){
-                clients.forEach((value) => {
-                    value.sendUTF(RECIEVE_MESSAGE + message.utf8Data.slice(SEND_MESSAGE.length));
-                });
+                broadcast(RECIEVE_MESSAGE, message.utf8Data.slice(SEND_MESSAGE.length));
             }
         }
         else if (message.type === 'binary') {
@@ -81,9 +86,10 @@ wsServer.on('request', function(request) {
             connection.sendBytes(message.binaryData);
         }
     });
+    
     connection.on('close', function(reasonCode, description) {
         console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
         clients.delete(clientID);
-        broadcast_disconnected_client(clientID);
+        broadcast(CLIENT_DISCONNECT, clientID);
     });
 });
